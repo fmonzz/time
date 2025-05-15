@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trading Journal Clock</title>
+  <style>
+    /* Base styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #ffeef0; /* Light pink background */
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      position: relative;
+      color: #000; /* Black text */
+    }
+    canvas#bgCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    /* Text overlay directly on canvas */
+    .overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 1;
+      pointer-events: none;
+      color: #000;
+    }
+    .date {
+      font-size: 2.5rem;
+      font-weight: 300;
+      margin-bottom: 0.2rem;
+      text-transform: capitalize;
+    }
+    .time {
+      font-size: 6rem;
+      font-family: 'Courier New', Courier, monospace;
+      line-height: 1;
+    }
+    .tz {
+      font-size: 1.2rem;
+      opacity: 0.7;
+      margin-top: 0.2rem;
+    }
+    .weekday {
+      font-size: 2rem;
+      font-weight: 500;
+      margin-top: 0.3rem;
+      text-transform: capitalize;
+    }
+    .blink {
+      animation: blink 1s step-start infinite;
+    }
+    @keyframes blink { 50% { visibility: hidden; } }
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <div class="overlay">
+    <div class="date" id="date"></div>
+    <div class="time" id="time"></div>
+    <div class="tz" id="tz"></div>
+    <div class="weekday" id="weekday"></div>
+  </div>
+  <script>
+    // Clock logic
+    function updateClock() {
+      const now = new Date();
+      // Date
+      const dateStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+      document.getElementById('date').textContent = dateStr;
+      // Time
+      const pad = n => String(n).padStart(2, '0');
+      const h = pad(now.getHours()), m = pad(now.getMinutes()), s = pad(now.getSeconds());
+      document.getElementById('time').innerHTML = `${h}<span class='blink'>:</span>${m}<span class='blink'>:</span>${s}`;
+      // Timezone
+      const tz = now.toLocaleTimeString('en-US', { timeZoneName: 'short' }).split(' ').pop();
+      document.getElementById('tz').textContent = tz;
+      // Weekday
+      const wd = now.toLocaleDateString('en-US', { weekday: 'long' });
+      document.getElementById('weekday').textContent = wd;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Candlestick rain
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
+    let w, h, candles = [];
+    class Candle {
+      constructor() {
+        this.w = Math.random() * 4 + 2;
+        this.h = Math.random() * 25 + 15;
+        this.x = Math.random() * w;
+        this.y = -this.h;
+        this.speed = Math.random() * 1 + 0.5;
+        // semi-transparent candles
+        this.color = Math.random() > 0.5 ? 'rgba(0,0,0,0.2)' : 'rgba(50,50,50,0.2)';
+      }
+      update() { this.y += this.speed; }
+      draw() { ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, this.w, this.h); }
+    }
+    function onResize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+    window.addEventListener('resize', onResize);
+    onResize();
+    function animate() {
+      ctx.clearRect(0, 0, w, h);
+      if (Math.random() < 0.1) candles.push(new Candle());
+      candles.forEach((c,i) => { c.update(); c.draw(); if(c.y > h) candles.splice(i,1); });
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+</body>
+</html>
